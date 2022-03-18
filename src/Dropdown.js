@@ -31,8 +31,11 @@ const Dropdown = ({ options, value, onChange, name, id }) => {
 
   const handleFocus = () => {
     setOpen(true);
+  };
 
-    document.addEventListener();
+  const handleChange = (option) => {
+    onChange(option);
+    setOpen(false);
   };
 
   return (
@@ -53,7 +56,7 @@ const Dropdown = ({ options, value, onChange, name, id }) => {
               <li key={option}>
                 <button
                   className="Dropdown__box__option"
-                  onClick={() => onChange(option)}
+                  onClick={() => handleChange(option)}
                 >
                   {option}
                 </button>
