@@ -1,11 +1,15 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, forwardRef, useCallback, useEffect } from "react";
 import PropTypes from "prop-types";
+import DropdownBox from "./DropdownBox";
+import { useBoundingclientrect } from "rooks";
 import "./Dropdown.css";
 
-const Dropdown = ({ options, value, onChange, name, id }) => {
+const Dropdown = forwardRef((props, ref) => {
+  const { id, name, value, options, onChange } = props;
   const [isOpen, setOpen] = useState(false);
   const inputRef = useRef();
   const boxRef = useRef();
+  const inputRect = useBoundingclientrect(inputRef);
 
   const handleDocumentClick = useCallback((e) => {
     const clickedOutside =
@@ -16,6 +20,19 @@ const Dropdown = ({ options, value, onChange, name, id }) => {
       setOpen(false);
     }
   }, []);
+
+  useEffect(() => {
+    ref.current = {
+      close: () => {
+        setOpen(false);
+        inputRef.current.blur();
+      },
+    };
+
+    return () => {
+      ref.current = null;
+    };
+  });
 
   useEffect(() => {
     if (isOpen) {
@@ -43,6 +60,7 @@ const Dropdown = ({ options, value, onChange, name, id }) => {
       <input
         type="text"
         value={value}
+        onChange={() => {}}
         className="Dropdown__input"
         onFocus={handleFocus}
         id={id}
@@ -50,24 +68,19 @@ const Dropdown = ({ options, value, onChange, name, id }) => {
         ref={inputRef}
       />
       {isOpen && (
-        <div className="Dropdown__box" ref={boxRef}>
-          <ul>
-            {options.map((option) => (
-              <li key={option}>
-                <button
-                  className="Dropdown__box__option"
-                  onClick={() => handleChange(option)}
-                >
-                  {option}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <DropdownBox
+          ref={boxRef}
+          onChange={handleChange}
+          options={options}
+          position={{
+            top: inputRect.bottom,
+            left: inputRect.left,
+          }}
+        />
       )}
     </div>
   );
-};
+});
 
 Dropdown.propTypes = {
   options: PropTypes.array,

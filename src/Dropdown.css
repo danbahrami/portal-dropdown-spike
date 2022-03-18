@@ -15,8 +15,6 @@
 .Dropdown__box {
   position: absolute;
   background-color: darkseagreen;
-  left: 0;
-  top: 100%;
   border-radius: 6px;
   width: 600px;
   max-height: 200px;
