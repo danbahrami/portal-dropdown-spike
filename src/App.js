@@ -1,23 +1,37 @@
-import logo from './logo.svg';
-import './App.css';
+import { useState } from "react";
+import SidePanel from "./SidePanel";
+import Dropdown from "./Dropdown";
+import "./App.css";
+
+const COLOURS = [
+  "red",
+  "green",
+  "blue",
+  "orange",
+  "purple",
+  "silver",
+  "black",
+  "white",
+  "maroon",
+  "violet",
+  "indigo",
+];
 
 function App() {
+  const [colour, setColour] = useState("green");
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <SidePanel>
+        <label htmlFor="colour">Pick a colour</label>
+        <Dropdown
+          options={COLOURS}
+          value={colour}
+          id="colour"
+          name="colour"
+          onChange={setColour}
+        />
+      </SidePanel>
     </div>
   );
 }

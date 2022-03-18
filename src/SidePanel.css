@@ -1,0 +1,26 @@
+.SidePanel {
+  background-color: azure;
+  width: 400px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.SidePanel__header,
+.SidePanel__footer {
+  background-color: salmon;
+  height: 50px;
+}
+
+.SidePanel__scroller {
+  overflow: scroll;
+  flex: 1;
+}
+
+.SidePanel__scroller__content {
+  height: 2000px;
+  padding: 20px;
+}
