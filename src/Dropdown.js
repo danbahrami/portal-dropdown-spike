@@ -5,7 +5,7 @@ import { useBoundingclientrect } from "rooks";
 import "./Dropdown.css";
 
 const Dropdown = forwardRef((props, ref) => {
-  const { id, name, value, options, onChange } = props;
+  const { id, name, value, options, onChange, boxPosition } = props;
   const [isOpen, setOpen] = useState(false);
   const inputRef = useRef();
   const boxRef = useRef();
@@ -72,15 +72,19 @@ const Dropdown = forwardRef((props, ref) => {
           ref={boxRef}
           onChange={handleChange}
           options={options}
-          position={{
-            top: inputRect.bottom,
-            left: inputRect.left,
-          }}
+          position={boxPosition(inputRect)}
         />
       )}
     </div>
   );
 });
+
+Dropdown.defaultProps = {
+  boxPosition: (inputRect) => ({
+    top: inputRect.bottom,
+    left: inputRect.left,
+  }),
+};
 
 Dropdown.propTypes = {
   options: PropTypes.array,
@@ -88,6 +92,7 @@ Dropdown.propTypes = {
   id: PropTypes.string,
   name: PropTypes.string,
   onChange: PropTypes.func,
+  boxPosition: PropTypes.func,
 };
 
 export default Dropdown;

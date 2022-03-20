@@ -6,19 +6,26 @@ import { COLOURS, LETTERS } from "./constants";
 import "./App.css";
 
 function App() {
+  const [scrollTop, setScrollTop] = useState(0);
   const [colour, setColour] = useState("chocolate");
   const [letter, setLetter] = useState(LETTERS[0]);
   const colourDropdownRef = useRef(null);
   const letterDropdownRef = useRef(null);
 
-  const handleScroll = useCallback(() => {
+  const handleScroll = useCallback((e) => {
     colourDropdownRef.current.close();
     letterDropdownRef.current.close();
+    setScrollTop(e.target.scrollTop);
   }, []);
 
   const debouncedHandleScroll = useDebounce(handleScroll, 500, {
     leading: true,
-    trailing: false,
+    trailing: true,
+  });
+
+  const boxPosition = (inputRect) => ({
+    top: inputRect.bottom - scrollTop,
+    left: inputRect.left,
   });
 
   return (
@@ -32,6 +39,7 @@ function App() {
           id="colour"
           name="colour"
           onChange={setColour}
+          boxPosition={boxPosition}
         />
 
         <label htmlFor="letter">Pick a letter</label>
@@ -42,6 +50,7 @@ function App() {
           id="letter"
           name="letter"
           onChange={setLetter}
+          boxPosition={boxPosition}
         />
       </SidePanel>
       <div className="App__result">
