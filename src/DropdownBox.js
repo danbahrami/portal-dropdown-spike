@@ -1,4 +1,4 @@
-import { useState, useEffect, forwardRef, useCallback } from "react";
+import { useState, useEffect, useRef, forwardRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import PropTypes from "prop-types";
 import { getKey, KEYS } from "./keyboard-utils";
@@ -21,6 +21,8 @@ const DropdownBox = forwardRef((props, ref) => {
   const { position, options, onChange, id, selected } = props;
   const portal = usePortal();
   const [focused, setFocus] = useState(selected);
+  const scrollerRef = useRef(null);
+  const optionRefs = useRef({});
 
   const handleKeydown = useCallback(
     (e) => {
@@ -50,6 +52,38 @@ const DropdownBox = forwardRef((props, ref) => {
     return () => document.removeEventListener("keydown", handleKeydown);
   }, [handleKeydown]);
 
+  /**
+   * Update the scroll to always include the focussed element
+   */
+  useEffect(() => {
+    const scrollTop = scrollerRef.current.scrollTop;
+    const scrollerHeight = scrollerRef.current.offsetHeight;
+    const offsetTop = optionRefs.current[focused].offsetTop;
+    const optionHeight = optionRefs.current[focused].offsetHeight;
+
+    if (scrollTop > offsetTop) {
+      scrollerRef.current.scrollTop = offsetTop;
+      return;
+    }
+
+    if (scrollTop + scrollerHeight < offsetTop + optionHeight) {
+      scrollerRef.current.scrollTop = offsetTop + optionHeight - scrollerHeight;
+      return;
+    }
+  }, [focused]);
+
+  /**
+   * Ensure the selected option is visible when the dropdown box is opened
+   */
+  useEffect(() => {
+    const scrollerHeight = scrollerRef.current.offsetHeight;
+    const offsetTop = optionRefs.current[selected].offsetTop;
+    const optionHeight = optionRefs.current[selected].offsetHeight;
+
+    scrollerRef.current.scrollTop =
+      offsetTop - scrollerHeight / 2 + optionHeight / 2;
+  }, []);
+
   if (!portal) {
     return null;
   }
@@ -62,23 +96,23 @@ const DropdownBox = forwardRef((props, ref) => {
         ...position,
       }}
     >
-      <ul>
+      <div className="Dropdown__box__scroller" ref={scrollerRef}>
         {options.map((option) => (
-          <li key={option}>
-            <button
-              role="option"
-              id={`${id}-option-${option}`}
-              aria-selected={option === selected}
-              className={`Dropdown__box__option ${
-                option === focused ? "focused" : ""
-              }`}
-              onClick={() => onChange(option)}
-            >
-              {option}
-            </button>
-          </li>
+          <button
+            key={option}
+            role="option"
+            ref={(el) => (optionRefs.current[option] = el)}
+            id={`${id}-option-${option}`}
+            aria-selected={option === selected}
+            className={`Dropdown__box__option ${
+              option === focused ? "focused" : ""
+            }`}
+            onClick={() => onChange(option)}
+          >
+            {option}
+          </button>
         ))}
-      </ul>
+      </div>
     </div>,
     portal
   );

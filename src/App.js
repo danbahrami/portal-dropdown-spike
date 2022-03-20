@@ -12,6 +12,8 @@ function App() {
   const colourDropdownRef = useRef(null);
   const letterDropdownRef = useRef(null);
 
+  console.log(scrollTop);
+
   const handleScroll = useCallback((e) => {
     colourDropdownRef.current.close();
     letterDropdownRef.current.close();
@@ -24,7 +26,7 @@ function App() {
   });
 
   const boxPosition = (inputRect) => ({
-    top: inputRect.bottom - scrollTop,
+    top: inputRect.bottom,
     left: inputRect.left,
   });
 

@@ -16,9 +16,12 @@
   position: absolute;
   background-color: darkseagreen;
   border-radius: 6px;
+  box-shadow: 1px 3px 13px rgb(0 0 0 / 50%);
+}
+
+.Dropdown__box__scroller {
   width: 600px;
   max-height: 200px;
-  box-shadow: 1px 3px 13px rgb(0 0 0 / 50%);
   overflow: scroll;
   overscroll-behavior: contain;
 }
