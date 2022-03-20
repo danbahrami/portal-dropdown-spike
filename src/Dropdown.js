@@ -2,11 +2,13 @@ import { useState, useRef, forwardRef, useCallback, useEffect } from "react";
 import PropTypes from "prop-types";
 import DropdownBox from "./DropdownBox";
 import { useBoundingclientrect } from "rooks";
+import { getKey, KEYS } from "./keyboard-utils";
 import "./Dropdown.css";
 
 const Dropdown = forwardRef((props, ref) => {
   const { id, name, value, options, onChange, boxPosition } = props;
   const [isOpen, setOpen] = useState(false);
+  const [hasFocus, setFocus] = useState(false);
   const inputRef = useRef();
   const boxRef = useRef();
   const inputRect = useBoundingclientrect(inputRef);
@@ -20,6 +22,21 @@ const Dropdown = forwardRef((props, ref) => {
       setOpen(false);
     }
   }, []);
+
+  const handleKeydown = useCallback(
+    (event) => {
+      const key = getKey(event);
+      if (!isOpen) {
+        if ([KEYS.ENTER, KEYS.SPACE, KEYS.UP, KEYS.DOWN].includes(key)) {
+          setOpen(true);
+          return;
+        }
+      } else if ([KEYS.ESCAPE, KEYS.TAB].includes(key)) {
+        setOpen(false);
+      }
+    },
+    [isOpen]
+  );
 
   useEffect(() => {
     ref.current = {
@@ -46,23 +63,41 @@ const Dropdown = forwardRef((props, ref) => {
     };
   }, [isOpen, handleDocumentClick]);
 
-  const handleFocus = () => {
-    setOpen(true);
-  };
+  useEffect(() => {
+    if (hasFocus) {
+      document.addEventListener("keydown", handleKeydown);
+    } else {
+      document.removeEventListener("keydown", handleKeydown);
+    }
 
-  const handleChange = (option) => {
-    onChange(option);
-    setOpen(false);
-  };
+    return () => {
+      document.removeEventListener("keydown", handleKeydown);
+    };
+  }, [hasFocus, handleKeydown]);
+
+  const handleChange = useCallback(
+    (option) => {
+      onChange(option);
+      setOpen(false);
+      inputRef.current.focus();
+    },
+    [onChange]
+  );
 
   return (
     <div className="Dropdown">
       <input
         type="text"
+        role="combobox"
+        aria-controls={`${id}-box`}
+        aria-expanded={isOpen}
+        aria-activedescendant={isOpen ? `${id}-box-option-${value}` : undefined}
         value={value}
         onChange={() => {}}
         className="Dropdown__input"
-        onFocus={handleFocus}
+        onFocus={() => setFocus(true)}
+        onBlur={() => setFocus(false)}
+        onClick={() => setOpen(true)}
         id={id}
         name={name}
         ref={inputRef}
@@ -72,7 +107,9 @@ const Dropdown = forwardRef((props, ref) => {
           ref={boxRef}
           onChange={handleChange}
           options={options}
+          selected={value}
           position={boxPosition(inputRect)}
+          id={`${id}-box`}
         />
       )}
     </div>
