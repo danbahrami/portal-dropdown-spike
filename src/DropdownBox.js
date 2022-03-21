@@ -96,13 +96,19 @@ const DropdownBox = forwardRef((props, ref) => {
         ...position,
       }}
     >
-      <div className="Dropdown__box__scroller" ref={scrollerRef}>
+      <div
+        className="Dropdown__box__scroller"
+        ref={scrollerRef}
+        role="listbox"
+        tabindex="-1"
+        id={`${id}-box`}
+      >
         {options.map((option) => (
           <button
             key={option}
             role="option"
             ref={(el) => (optionRefs.current[option] = el)}
-            id={`${id}-option-${option}`}
+            id={`${id}-box-option-${option}`}
             aria-selected={option === selected}
             className={`Dropdown__box__option ${
               option === focused ? "focused" : ""

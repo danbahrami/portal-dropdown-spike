@@ -4,6 +4,12 @@ I wanted to see how we can render wide dropdowns inside a scrollable panel so th
 
 This is not achievable purely with CSS because scrollable elements always have an `overflow-y: hidden` rule applied to them.
 
+### Requirements
+
+1. The dropdown must be able to extend outside the bounds of a scrollable ancestor element.
+2. The dropdown box must maintain a position next to its dropdown input
+3. The dropdown component must have a reuseable API (not specific to being inside a scrollable element)
+
 ## Try it out at home
 
 In the project directory, you can run:
