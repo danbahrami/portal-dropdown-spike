@@ -1,70 +1,109 @@
-# Getting Started with Create React App
+# A spike into rendering dropdowns inside a scrollable panel
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+I wanted to see how we can render wide dropdowns inside a scrollable panel so that the dropdowns go outside the bounds of the panel.
 
-## Available Scripts
+This is not achievable purely with CSS because scrollable elements always have an `overflow-y: hidden` rule applied to them.
+
+## Try it out at home
 
 In the project directory, you can run:
 
 ### `npm start`
 
-Runs the app in the development mode.\
+Runs the app in the development mode.
 Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## The approach
 
-### `npm test`
+### Step 1: render the dropdown box in a portal
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Using a portal to render the dropdown box lets us escape the overflow context of the panel by rendering it at the top level of the document.
 
-### `npm run build`
+The dropdown box is positioined absolutely and uses the dropdown input element as a positioning reference.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+With this we can render a dropdown that extends outside the bounds of the panel. But there is a problem.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+When you scroll the side panel the dropdown stays exactly where it is. So onto the next step:
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Step 2: close the open dropdown when the sidepanel scrolls
 
-### `npm run eject`
+If you're focused on a dropdown and then scroll the sidepanel the dropdown should either:
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+1. update its position to always sit underneath its dropdown input
+2. close
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+Option 1 comes with its own set of problems - for example, what happens when you scroll all the way up? Does the Dropdown get cut off by the panel header or does it stay visible until it's completely scrolled out of site?
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+I was scepticle that option 2 would feel good but I tried it and actually, it feels really natural.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+I achieved it by exposing a close function through a ref on the dropdown component - similar to how you can call `ref.focus()` on an input element ref, you can call `ref.close()` on a dropdown component ref.
 
-## Learn More
+```js
+const dropdownRef = useRef();
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+const handleScroll = () => {
+  dropdownRef.current.close();
+};
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+<div onScroll={handleScroll}>
+  <Dropdown ref={dropdownRef} />
+</div>;
+```
 
-### Code Splitting
+In reality this causes slow performance but you can debounce the scroll event to only fire when you first start closing and it feels buttery smooth.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+The story isn't quite finished yet though. We have two further problems.
 
-### Analyzing the Bundle Size
+1. When you scroll a bit and then open the dropdown the box is positioned as if you never scrolled the panel. (it doesnt sit right next to its input)
+2. Because the dropdown options now sit at the document top level they are disconnected from their input when it comes to accessibility.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+So lets solve those!
 
-### Making a Progressive Web App
+### Position the dropdown box to account for the panel scroll position
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+The problem is that the dropdown box needs an absolute position that is aware of the input's position inside the panel and also the scrolltop of the panel itself. To achieve this I've allowed the parent to override the position of the dropdown box with a function prop. The function gets given the bounding rectangle of the drodpown input as an argument.
 
-### Advanced Configuration
+By default the function prop sits the dropdown underneath the input:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+```js
+Dropdown.defaultProps = {
+  boxPosition: (inputRect) => ({
+    top: inputRect.bottom,
+    left: inputRect.left,
+  }),
+};
+```
 
-### Deployment
+But the parent can override this to include the panel scroll position:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+```js
+<Dropdown
+  boxPosition={(inputRect) => ({
+    top: inputRect.bottom - panelScrollTop,
+    left: inputRect.left,
+  })}
+/>
+```
 
-### `npm run build` fails to minify
+### Make the dropdown accessible
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+I found this great resource on how to make an accessible "combobox" https://w3c.github.io/aria-practices/examples/combobox/combobox-select-only.html
+
+The basic steps are:
+
+1. Give the dropdown input, input box and each option element a predictable id.
+1. Mark the dropdown input as `role="combobox"`
+1. Mark the dropdown box as `role="listbox"`
+1. Mark each option as `role="option"`
+1. Tell the dropdown where to find the controls with `aria-controls="{listbox-id"}`
+1. Tell the dropdown which option is selected with `aria-activedescendant="{current-option-id}"`
+
+I event went a bit further with this spike and implemented keyboard navigation in the option box with arrow keys, space/enter to select an option and tab/escape to close the dropdown.
+
+### accessibility with trees
+
+One final cool thing I found is that the `aria-controls` of a combobox doesn't have to be a `"listbox"`... it can be a tree!!!
+
+https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Roles/tree_role
+
+So we could even make our tree selects nice and friendly to screen readers :)
